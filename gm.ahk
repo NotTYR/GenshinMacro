@@ -19,7 +19,7 @@ return
         Click
     }
     run, https://www.youtube.com/watch?v=zsB6Iqjf8Qo
-    Sleep, 5000
+    Sleep, 10000
     Send, ^{w}
 return
 
