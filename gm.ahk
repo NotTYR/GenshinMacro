@@ -3,34 +3,54 @@
 #SingleInstance Force
 #Persistent
 #NoEnv
+CoordMode Pixel
 
-Launch()
-Loop {
-    AssistedQuest()
+
++c::
+    JoinCoop()
+return
+
++p::
+    MouseGetPos, mx , my
+    MsgBox %mx%, %my% 
+return
+
+
+
+JoinCoop(){
+    HomeScreen()
+    SetCursorPos(365, 590)
+    Click
+    Loop, 40{
+        SetCursorPos(1145, 165)
+        Click
+        send {WheelDown 7}
+        Sleep, 500
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading1.png
+        if (ErrorLevel == 0){
+            break
+        }
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading2.png
+        if (ErrorLevel == 0){
+            break
+        }
+    }
 }
 
 Message(msg){
     SetKeyDelay, 0
     DllCall("SetCursorPos", int, 400, int, 710)
     Click
-    Send, % msg
+    Send, %msg%
     Send, {Enter}
 }
 
-Online(){
-    ImageSearch, OutputVarX, OutputVarY, 270, 130, 340, 160, %A_ScriptDir%\images\online.png
-    if (ErrorLevel == 0){
-        DllCall("SetCursorPos", int, 1225, int, 125)
-        Click
-        Sleep, 500
-        Message("hello")
-    }
-}
 
 HomeScreen(){
     Loop {
         Sleep, 1000
-        ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\homescreen.png
+        CoordMode Pixel
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, A_ScreenWidth, A_ScreenHeight, %A_ScriptDir%\images\homescreen.png
         if (ErrorLevel == 0){
             break
         }
@@ -79,58 +99,6 @@ Launch(){
     }
 }
 
-AssistedQuest(){
-    ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\quest1.png
-    if (ErrorLevel == 0){
-        Loop {
-            ImageSearch, OutputVarX, OutputVarY, 1200, 400, 1366, 768, %A_ScriptDir%\images\loaded.png
-            if (ErrorLevel == 0){
-                break
-            }
-            DllCall("SetCursorPos", int, 1070, int, 575)
-            Click
-        }
-    }
-    ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\quest2.png
-    if (ErrorLevel == 0){
-        Loop {
-            ImageSearch, OutputVarX, OutputVarY, 1200, 400, 1366, 768, %A_ScriptDir%\images\loaded.png
-            if (ErrorLevel == 0){
-                break
-            }
-            DllCall("SetCursorPos", int, 1070, int, 575)
-            Click
-        }
-    }
-}
-
-+p::
-    MouseGetPos, x, y
-    MsgBox %x%,%y%
-return
-
-return
-
-^n::
-    SetKeyDelay, 50
-    Toggle := !Toggle
-     While Toggle{
-        Click
-        Send, rrrr
-    }
-return
-
-k::
-    Toggle := !Toggle
-    While Toggle{
-	    Suspend
-    }
-return
-
-+h::
-    Online()
-return
-
 Load(){
     Loop {
         ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\loaded.png
@@ -143,3 +111,7 @@ Load(){
 
 f9::
 ExitApp
+
+SetCursorPos(x, y){
+    DllCall("SetCursorPos", int, x, int, y)
+}
