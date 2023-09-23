@@ -6,30 +6,27 @@
 CoordMode Pixel
 SetKeyDelay, 0
 
-GuiX := 0
-GuiY := 0
+
+width := 500
+height := 285
 Menu, Tray, Icon, %A_ScriptDir%/images/icon.ico
-Gui, Font, s10, Verdana  
-Gui, Add, Button, default gDomain, Domain
-Gui, Add, Button, default gMessage, Message test
-Gui, Add, Button, default gParty, Party(Put Nahida as 1, Zhongli as 2)
-Gui, Add, Button, default gStart, Start
-Gui, Show, x%GuiX% y%GuiY% w500 h285, Genshin Macro
-return
-
-Party:
-    Party()
-return
-
-Domain:
-    Domain(2)
-return
-
-Message:
-    Beg("Cor Lapis")
+Gui, Font, s10, Verdana
+Gui, Add, Text, x15 y15, Local Speciality
+Gui, Add, DropDownList, x15 y40 w100 vLocalSpecialityChoice Choose1 , Qingxin
+Gui, Add, Text, x185 y15 w100, Ores
+Gui, Add, DropDownList, x150 y40 w100 vOreChoice Choose1 , Amethyst
+Gui, Add, Text, x134 y0 w1 h85 0x7
+Gui, Add, Text, x270 y0 w1 h85 0x7
+Gui, Add, Text, x5 y85 w492 h1 0x7
+Gui, Add, Button, x360 y25 default gStart, Start
+Gui, Add, Button, x15 y250 default gLaunch, Launch Game
+Gui, Show, x0 y0 w%width% h%height%, Genshin Macro
 return
 
 Start:
+return
+
+Launch:
     Launch()
 return
 
@@ -204,8 +201,11 @@ Load(){
     MsgBox loaded
 }
 
+GuiClose:
+    ExitApp
+
 f9::
-ExitApp
+    ExitApp
 
 SetCursorPos(x, y){
     DllCall("SetCursorPos", int, x, int, y)
