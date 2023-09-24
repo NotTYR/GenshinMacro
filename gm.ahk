@@ -24,9 +24,9 @@ Gui, Add, DropDownList, x150 y40 w100 vOreChoice gO, |Amethyst
 Gui, Add, Text, x134 y0 w1 h85 0x7
 Gui, Add, Text, x270 y0 w1 h150 0x7
 Gui, Add, Text, x5 y85 w492 h1 0x7
-Gui, Add, Text, x280 y105 w110 vCoopCheck, Coop Check: -1
-Gui, Add, Button, x400 y90 default gJoinCoop, Join Coop
-Gui, Add, Button, x395 y120 default gLeaveCoop, Leave Coop
+Gui, Add, Text, x280 y95 w110 vCoopCheck, Coop Check: -1
+Gui, Add, Button, x280 y115 default gJoinCoop, Join Coop
+Gui, Add, Button, x360 y115 default gWebhook, Webhook Settings
 Gui, Add, Button, x350 y25 default gStart, Start(F6)
 Gui, Add, Button, y100 x15 default gLaunch, Launch Game
 Gui, Add, Button, y100 x175  default gClose, Close
@@ -46,15 +46,15 @@ return
 
 return
 f6::
-   Start()
+    Start()
 return 
 
 Start:
     Start()
 return
 
-LeaveCoop:
-    LeaveCoop()
+Webhook:
+    Run, %A_ScriptDir%/webhook.ahk
 return
 
 Launch:
@@ -62,14 +62,56 @@ Launch:
 return
 
 Start(){
+    IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
+    Webhook("Main Loop: Collecting " LocalSpeciality)
+    Party()
     Loop {
         StatueOfSeven()
-        Party()
         Char(1)
         JoinCoop()
         Speciality()
         LeaveCoop()
     }
+}
+
+Webhook(msg){
+    IniRead, url, %A_ScriptDir%/settings.ini, Links, WebhookUrl
+    Send_Msg_to_Discord(msg, url)
+}
+
+Send_Msg_to_Discord(msg,Url="webhookurl"){
+   ;Default parmaeter is url of general Of my Server
+
+   EncodedMsg := JsonReady(msg)
+   
+   postdata=
+   (
+   {
+      "content": "%EncodedMsg%"
+   }
+   )
+
+   WebRequest := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+   WebRequest.Open("POST", url, false)
+   WebRequest.SetRequestHeader("Content-Type", "application/json")
+   WebRequest.Send(postdata)  
+}
+
+
+JsonReady(msg) {
+q="
+dq=
+(
+\"
+)
+    msg := StrReplace(msg, q, dq) ; Replace double quote with \"
+    msg := StrReplace(msg, "/", "\\/") ; Replace slash with \/
+    msg := StrReplace(msg, "`n", "\n") ; Replace newline with \n
+    msg := StrReplace(msg, "`r", "\r") ; Replace carriage return with \r
+    msg := StrReplace(msg, "`t", "\t") ; Replace horizontal tab with \t
+    msg := StrReplace(msg, "`b", "\b") ; Replace backspace with \b
+    msg := StrReplace(msg, "`f", "\f") ; Replace form feed with \f
+    return % msg
 }
 
 CoopSend(send) {
@@ -140,11 +182,13 @@ CoopCheck(){
 }
 
 LeaveCoop(){
+    Webhook("Leaving Coop")
     HomeScreen()
     SetCursorPos(365, 590)
     Click
     Sleep, 1000
     Click(1145, 733)
+    Load()
 }
 
 Load(){
@@ -244,14 +288,14 @@ Teleport(x, y){
     tp := -1
     Loop {
         Click(x, y)
-        Sleep, 2000
-        ImageSearch, OutputVarX, OutputVarY, 1000, 650, 1100, 768, %A_ScriptDir%\images\discoveredtp.png
+        Sleep, 1000
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\discoveredtp.png
         if (ErrorLevel == 0){
             tp = 1
             break
         } 
         else {
-            ImageSearch, OutputVarX, OutputVarY, 1000, 650, 1100, 768, %A_ScriptDir%\images\undiscoveredtp.png
+            ImageSearch, OutputVarX, OutputVarY, 1000, 650, 1100, 736, %A_ScriptDir%\images\undiscoveredtp.png
             if (ErrorLevel == 0){
                 tp = 0
                 break
@@ -271,6 +315,7 @@ Teleport(x, y){
 }
 
 StatueOfSeven(){
+    Webhook("Teleporting to Statue of Seven")
     Home()
     Send, m
     Sleep, 2000
@@ -289,8 +334,8 @@ StatueOfSeven(){
 
 Beg(speciality){
     Home()
+    Webhook("Begging for " speciality ".")
     Message("Hi")
-    Sleep, 1000
     Message("I would like to take some " speciality " in your world")
     Send, {Esc}
 }
@@ -321,6 +366,7 @@ Launch(){
 return
 
 Party(){
+    Webhook("Swapping to Macro Party")
     Home()
     Send, l
     Sleep, 4000
@@ -338,22 +384,38 @@ Party(){
 }
 
 JoinCoop(){
+    index := 1
     joined := 0
     Loop{
+        Webhook("Joining Coop, Loop " index)
+        index += 1
         Home()
-        Sleep, 5000
+        if (index != 2){
+            Sleep, 2500
+        }
+        ; while loop check
         if (InCoop == 1){
+            joined = 1
             break
         }
         Send, {Esc}
         Sleep, 1000
         SetCursorPos(365, 590)
+        ; open coop page
         Click
-        Loop, 15{
+        Sleep, 1000
+        ; in coop, different interface
+        ImageSearch, OutputVarX, OutputVarY, 1000, 650, 1366, 768, %A_ScriptDir%\images\leave.png
+        if (ErrorLevel == 0){
+            joined = 1
+            break
+        }
+        ; if not in coop interface spam invites
+        Loop, 20{
             SetCursorPos(1145, 175)
             Click
             send {WheelDown 7}
-            Sleep, 500
+            ; coop loading screens
             ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading1.png
             if (ErrorLevel == 0){
                 joined = 1
@@ -364,29 +426,36 @@ JoinCoop(){
                 joined = 1
                 break
             }
-            if (InCoop == 1){
-                joined = 1
-                break
-            }
         }
-        if (joined == 1){
+        ; coop loading screens
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading1.png
+        if (ErrorLevel == 0){
+            joined = 1
+            break
+        }
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading2.png
+        if (ErrorLevel == 0){
+            joined = 1
             break
         }
     }
+    Webhook("Joined Coop!")
 }
 
 Message(msg){
     if WinExist("ahk_exe GenshinImpact.exe"){
         WinActivate
         Send, {Enter}
-        Sleep, 1000
+        Sleep, 2000
         Click(80, 90)
+        Sleep, 500
         SetKeyDelay, 0
         DllCall("SetCursorPos", int, 400, int, 710)
         Click
+        Sleep, 500
         Send, %msg%
         Send, {Enter}
-        Sleep, 1000
+        Sleep, 2000
     }
 }
 
