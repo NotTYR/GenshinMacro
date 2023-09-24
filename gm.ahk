@@ -46,7 +46,7 @@ return
 
 return
 f6::
-    Start()
+   Start()
 return 
 
 Start:
@@ -118,8 +118,15 @@ CoopCheck(){
                 GuiControl, Text, CoopCheck, Coop Check: 1
                 InCoop = 1
             } else {
-                GuiControl, Text, CoopCheck, Coop Check: 0
-                InCoop = 0
+                Sleep, 1000
+                ImageSearch, OutputVarX, OutputVarY, 230, 30, 300, 70, %A_ScriptDir%\images\3p.png
+                if (ErrorLevel == 0){
+                    GuiControl, Text, CoopCheck, Coop Check: 1
+                    InCoop = 1
+                } else {
+                    GuiControl, Text, CoopCheck, Coop Check: 0
+                    InCoop = 0
+                }
             }
         } else {
             Sleep, 1000
@@ -333,7 +340,13 @@ Party(){
 JoinCoop(){
     joined := 0
     Loop{
-        HomeScreen()
+        Home()
+        Sleep, 5000
+        if (InCoop == 1){
+            break
+        }
+        Send, {Esc}
+        Sleep, 1000
         SetCursorPos(365, 590)
         Click
         Loop, 15{
