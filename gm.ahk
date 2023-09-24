@@ -7,32 +7,36 @@
 CoordMode Pixel
 SetKeyDelay, 0
 
+Global InCoop := -1
+
+IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
 
 width := 500
 height := 150
 margin := 30
 Menu, Tray, Icon, %A_ScriptDir%/images/icon.ico
-Gui, +AlwaysOnTop +border +ToolWindow -SysMenu +Owner
 Gui, Font, s10, Verdana
 Gui, Add, Text, x15 y15, Local Speciality
 Gui, Add, DropDownList, x15 y40 w100 vLocalSpecialityChoice gO, |Qingxin
+GuiControl, Choose, LocalSpecialityChoice, |%LocalSpeciality% ; select the second item
 Gui, Add, Text, x185 y15 w100, Ores
-Gui, Add, DropDownList, x150 y40 w100 vOreChoice , |Amethyst
+Gui, Add, DropDownList, x150 y40 w100 vOreChoice gO, |Amethyst
 Gui, Add, Text, x134 y0 w1 h85 0x7
-Gui, Add, Text, x270 y0 w1 h85 0x7
+Gui, Add, Text, x270 y0 w1 h150 0x7
 Gui, Add, Text, x5 y85 w492 h1 0x7
-Gui, Add, Button, x360 y25 default gStart, Start
+Gui, Add, Text, x280 y105 w110 vCoopCheck, Coop Check: -1
+Gui, Add, Button, x400 y90 default gJoinCoop, Join Coop
+Gui, Add, Button, x395 y120 default gLeaveCoop, Leave Coop
+Gui, Add, Button, x350 y25 default gStart, Start(F6)
 Gui, Add, Button, y100 x15 default gLaunch, Launch Game
 Gui, Add, Button, y100 x175  default gClose, Close
-Gui, Show, x0 y0 w%width% h%height%, Genshin Macro
-Gui, +LastFound ; make the GUI the Last Found Window
-WinGetPos,,, GUIWidth ; find out the width of the gui window
-GuiXPos := A_ScreenWidth - GUIWidth ; find out where it should be placed based on window size and current resolution of screen
-WinMove,,, %GuiXPos%, 0 ; move the windoweaseas
+Gui, Show, x800 y450 w%width% h%height%, Genshin Macro
+CoopCheck()
 return
 
 O:
     Gui, Submit, nohide
+    IniWrite, %LocalSpecialityChoice%, %A_ScriptDir%/settings.ini, Collect,LocalSpeciality
 return
 
 Close:
@@ -40,41 +44,170 @@ Close:
     Gui, Submit
 return
 
+return
+f6::
+    Start()
+return 
+
 Start:
-    Char(1)
-    Loop, 2{
-        Send, e
-        Send, {a down}
-        Send, {s down}
-        Sleep, 1750
-        Send, {a up}
-        Send, {s up}
-        Sleep, 4000
-    }
-    Loop, 2{
-        Send, e
-        Send, {d down}
-        Sleep, 1750
-        Send, {d up}
-        Sleep, 4000
-    }
-    Send, e
+    Start()
+return
+
+LeaveCoop:
+    LeaveCoop()
 return
 
 Launch:
     Launch()
 return
 
-Speciality(){
-    if(%LocalSpecialityChoice% == Qingxin){
-        Domain(8)
-        Loop, 5{
-            ReduceMap()
-        }
-        Sleep, 500
-        Teleport(596, 349)
-        ; here
+Start(){
+    Loop {
+        StatueOfSeven()
+        Party()
+        Char(1)
+        JoinCoop()
+        Speciality()
+        LeaveCoop()
     }
+}
+
+CoopSend(send) {
+    SwitchToGenshin()
+    if (InCoop != 2){
+        Send, %send%
+        return 1
+    } else {
+        return 0
+    }
+}
+
+CoopFunc(funcName, param1:="", param2:="", param3:="")
+{
+    SwitchToGenshin()
+    if (InCoop != 2){
+        if IsFunc(funcName)
+            if (param3 == ""){
+                if(param2 == ""){
+                    if(param1 ==""){
+                        %funcName%()
+                    } else{
+                        %funcName%(param1)
+                    }
+                } else {
+                    %funcName%(param1, param2)
+                }
+            } else {
+                %funcName%(param1, param2, param3)
+            }
+        ; coop check
+        return 1
+    } else {
+        return 0
+    }
+}
+
+CoopCheck(){
+    Loop{
+        Sleep, 1000
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\loaded.png
+        if (ErrorLevel == 0){
+            Sleep, 1000
+            ImageSearch, OutputVarX, OutputVarY, 230, 30, 300, 70, %A_ScriptDir%\images\2p.png
+            if (ErrorLevel == 0){
+                GuiControl, Text, CoopCheck, Coop Check: 1
+                InCoop = 1
+            } else {
+                GuiControl, Text, CoopCheck, Coop Check: 0
+                InCoop = 0
+            }
+        } else {
+            Sleep, 1000
+            ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\kicked.png
+            if (ErrorLevel == 0){
+                GuiControl, Text, CoopCheck, Coop Check: 2
+                InCoop = 2
+            }
+        }
+    }
+}
+
+LeaveCoop(){
+    HomeScreen()
+    SetCursorPos(365, 590)
+    Click
+    Sleep, 1000
+    Click(1145, 733)
+}
+
+Load(){
+    Loop {
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\loaded.png
+        if (ErrorLevel == 0){
+            break
+        }
+    }
+}
+
+
+Speciality(){
+    IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
+    Loop, 1{
+        Beg(LocalSpeciality)
+        if(%LocalSpeciality% == Qingxin){
+            Domain(8)
+            Loop, 5{
+                c := CoopFunc(ReduceMap())
+                if (c == 0){
+                    break
+                }
+            }
+            Sleep, 500
+            t := Teleport(596, 349)
+            if (t == 1){
+                Char(1)
+                Loop, 1{
+                    c := CoopSend("{a down}")
+                    if (c == 0){
+                        Send, {a up}
+                        break
+                    }
+                    c := CoopSend("{s down}")
+                    if (c == 0){
+                        Send, {s up}
+                        break
+                    }
+                    Sleep, 2000
+                    Send, {a up}
+                    Send, {s up}
+                    c := CoopSend("e")
+                    if (c == 0){
+                        break
+                    }
+                    c := CoopSend("{d down}")
+                    if (c == 0){
+                        Send, {d up}
+                        break
+                    }
+                    Sleep, 4000
+                    Send, {d up}
+                    Sleep, 1500
+                    Send, e
+                }
+                return
+            } else {
+                ; no tp waypoint
+                return 0
+            }
+        }
+    }
+}
+
+CheckIfKicked(){
+    ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\kicked.png
+    if (ErrorLevel == 0){
+        return 1
+    } 
 }
 
 
@@ -85,29 +218,49 @@ Char(char){
 }
 
 ZoomMap(){
+    SwitchToGenshin()
     Click(32, 300)
 }
 
 SwitchToGenshin(){
-    Loop, 1 {
-        if WinActive("ahk_exe GenshinImpact.exe"){
-            break
-        }
-        if WinExist("ahk_exe GenshinImpact.exe"){
-            WinActivate
-        }
+    if WinExist("ahk_exe GenshinImpact.exe"){
+        WinActivate
     }
 }
 
 ReduceMap(){
+    SwitchToGenshin()
     Click(32, 461)
 }
 
 Teleport(x, y){
-    Click(x, y)
-    Sleep, 1000
-    Click(1200, 700)
-    Load()
+    tp := -1
+    Loop {
+        Click(x, y)
+        Sleep, 2000
+        ImageSearch, OutputVarX, OutputVarY, 1000, 650, 1100, 768, %A_ScriptDir%\images\discoveredtp.png
+        if (ErrorLevel == 0){
+            tp = 1
+            break
+        } 
+        else {
+            ImageSearch, OutputVarX, OutputVarY, 1000, 650, 1100, 768, %A_ScriptDir%\images\undiscoveredtp.png
+            if (ErrorLevel == 0){
+                tp = 0
+                break
+            }
+        }
+        Send, {Esc}
+        ; error, next loop
+    } ; check if tp waypoint is unlocked
+    if (tp == 1){
+        Click(1200, 700)
+        Load()
+        return 1
+    } else {
+        Home()
+        return 0
+    }
 }
 
 StatueOfSeven(){
@@ -149,52 +302,10 @@ Launch(){
                 break
             }
         }
-        ; Wait for game to load
-        Loop{
-            ; logged in
-            ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\logout.png
-            if (ErrorLevel == 0){
-                loggedin := 1
-                break
-            }
-            ; not logged in
-            ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\login.png
-            if (ErrorLevel == 0){
-                loggedin := 0
-                break
-            }
+    } else {
+        if WinExist("ahk_exe GenshinImpact.exe"){
+            WinActivate
         }
-        if (loggedin == 0){
-            Click(500, 300)
-            FileRead, email, %A_ScriptDir%/username.txt
-            Send, %email%
-            Click(500, 360)
-            FileRead, pw, %A_ScriptDir%/pw.txt
-            Send, %pw%
-            Click(500, 500)
-        }
-        Loop{
-            ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\logout.png
-            if (ErrorLevel == 0){
-                break
-            }
-        }
-        Loop{
-            ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\logout.png
-            if (ErrorLevel == 0){
-                Click(600, 400)
-            } else {
-                break
-            }
-        }
-        Loop{
-            ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\logout.png
-            if (ErrorLevel == 0){
-                Click(600, 400)
-                break
-            }
-        }
-        Load()
     }
 }
 +p::
@@ -220,20 +331,32 @@ Party(){
 }
 
 JoinCoop(){
-    HomeScreen()
-    SetCursorPos(365, 590)
-    Click
-    Loop, 40{
-        SetCursorPos(1145, 165)
+    joined := 0
+    Loop{
+        HomeScreen()
+        SetCursorPos(365, 590)
         Click
-        send {WheelDown 7}
-        Sleep, 500
-        ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading1.png
-        if (ErrorLevel == 0){
-            break
+        Loop, 15{
+            SetCursorPos(1145, 175)
+            Click
+            send {WheelDown 7}
+            Sleep, 500
+            ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading1.png
+            if (ErrorLevel == 0){
+                joined = 1
+                break
+            }
+            ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading2.png
+            if (ErrorLevel == 0){
+                joined = 1
+                break
+            }
+            if (InCoop == 1){
+                joined = 1
+                break
+            }
         }
-        ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading2.png
-        if (ErrorLevel == 0){
+        if (joined == 1){
             break
         }
     }
@@ -243,35 +366,60 @@ Message(msg){
     if WinExist("ahk_exe GenshinImpact.exe"){
         WinActivate
         Send, {Enter}
+        Sleep, 1000
         Click(80, 90)
         SetKeyDelay, 0
         DllCall("SetCursorPos", int, 400, int, 710)
         Click
         Send, %msg%
         Send, {Enter}
-        Sleep, 500
+        Sleep, 1000
     }
 }
 
 Domain(domain){
-    HomeScreen()
-    Click(465, 500)
-    Sleep, 500
-    Click(215, 315)
-    Sleep, 1000
-    SetCursorPos(1105, 240)
-    Loop, %domain% {
-        Send, {WheelDown 8}
+    Loop, 1 {
+        HomeScreen()
+        c := CoopFunc(Click(465, 500))
+        if (c == 0){
+            break
+        }
+        Sleep, 2000
+        c := CoopFunc(Click(215, 315))
+        if (c == 0){
+            break
+        }
+        Sleep, 2000
+        c := CoopFunc(SetCursorPos(1105, 240))
+        if (c == 0){
+            break
+        }
+        Loop, %domain% {
+            Send, {WheelDown 8}
+        }
+        Sleep, 500
+        Click
+        Sleep, 5000
     }
-    Sleep, 500
-    Click
-    Sleep, 5000
 }
 
 Home(){
-    HomeScreen()
-    Send, {Esc}
-    Sleep, 1000
+    if WinExist("ahk_exe GenshinImpact.exe"){
+        WinActivate
+        Loop {
+            Sleep, 1000
+            CoordMode Pixel
+            ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\loaded.png
+            if (ErrorLevel == 0){
+                break
+            }
+            Send, {Esc}
+            if(InCoop == 2){
+                return -1
+                break
+            } 
+        }
+    }
 }
 
 HomeScreen(){
@@ -284,16 +432,11 @@ HomeScreen(){
             if (ErrorLevel == 0){
                 break
             }
-            Send, {Esc} 
-        }
-    }
-}
-
-Load(){
-    Loop {
-        ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\loaded.png
-        if (ErrorLevel == 0){
-            break
+            Send, {Esc}
+            if(InCoop == 2){
+                return -1
+                break
+            } 
         }
     }
 }
