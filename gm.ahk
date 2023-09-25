@@ -10,6 +10,7 @@ SetKeyDelay, 0
 Global InCoop := -1
 
 IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
+IniRead, Ore, %A_ScriptDir%/settings.ini, Collect, Ore
 
 width := 500
 height := 150
@@ -17,10 +18,11 @@ margin := 30
 Menu, Tray, Icon, %A_ScriptDir%/images/icon.ico
 Gui, Font, s10, Verdana
 Gui, Add, Text, x15 y15, Local Speciality
-Gui, Add, DropDownList, x15 y40 w100 vLocalSpecialityChoice gO, |Qingxin
-GuiControl, Choose, LocalSpecialityChoice, |%LocalSpeciality% ; select the second item
+Gui, Add, DropDownList, x15 y40 w100 vLocalSpecialityChoice gLS, |Qingxin
+GuiControl, Choose, LocalSpecialityChoice, |%LocalSpeciality%
 Gui, Add, Text, x185 y15 w100, Ores
-Gui, Add, DropDownList, x150 y40 w100 vOreChoice gO, |Amethyst
+Gui, Add, DropDownList, x150 y40 w100 vOreChoice gO, |Cor Lapis
+GuiControl, Choose, OreChoice, |%Ore%
 Gui, Add, Text, x134 y0 w1 h85 0x7
 Gui, Add, Text, x270 y0 w1 h150 0x7
 Gui, Add, Text, x5 y85 w492 h1 0x7
@@ -36,7 +38,10 @@ return
 
 O:
     Gui, Submit, nohide
-    IniWrite, %LocalSpecialityChoice%, %A_ScriptDir%/settings.ini, Collect,LocalSpeciality
+    IniWrite, %OreChoice%, %A_ScriptDir%/settings.ini, Collect, Ore
+LS:
+    Gui, Submit, nohide
+    IniWrite, %LocalSpecialityChoice%, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
 return
 
 Close:
@@ -44,7 +49,10 @@ Close:
     Gui, Submit
 return
 
+
+f7::
 return
+
 f6::
     Start()
 return 
@@ -61,16 +69,52 @@ Launch:
     Launch()
 return
 
+Ore(){
+    IniRead, Ore, %A_ScriptDir%/settings.ini, Collect, Ore
+    if(Ore == "Cor Lapis"){
+        Domain(15)
+        Loop, 5{
+            ZoomMap()
+        }
+        Teleport(512, 723)
+        Send, {a down}
+        Sleep, 2300
+        Send, {a up}
+        Send, {w down}
+        Sleep, 2250
+        Send, {w up}
+        Send, {e down}
+        Sleep, 2000
+        Send, {e up}
+        Send, f
+    }
+}
+
 Start(){
     IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
-    Webhook("Main Loop: Collecting " LocalSpeciality)
+    IniRead, Ore, %A_ScriptDir%/settings.ini, Collect, Ore
     Party()
     Loop {
-        StatueOfSeven()
-        Char(1)
-        JoinCoop()
-        Speciality()
-        LeaveCoop()
+        Loop, 1 {
+            if(LocalSpeciality == ""){
+                break
+            }
+            StatueOfSeven()
+            Char(1)
+            JoinCoop()
+            Speciality()
+            LeaveCoop()
+        }
+        Loop, 1 {
+            if(Ore == ""){
+                break
+            }
+            StatueOfSeven()
+            Char(2)
+            JoinCoop()
+            Ore()
+            LeaveCoop()
+        }
     }
 }
 
@@ -155,20 +199,13 @@ CoopCheck(){
         ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\loaded.png
         if (ErrorLevel == 0){
             Sleep, 1000
-            ImageSearch, OutputVarX, OutputVarY, 230, 30, 300, 70, %A_ScriptDir%\images\2p.png
+            ImageSearch, OutputVarX, OutputVarY, 1200, 100, 1350, 300, %A_ScriptDir%\images\1p.png
             if (ErrorLevel == 0){
                 GuiControl, Text, CoopCheck, Coop Check: 1
                 InCoop = 1
             } else {
-                Sleep, 1000
-                ImageSearch, OutputVarX, OutputVarY, 230, 30, 300, 70, %A_ScriptDir%\images\3p.png
-                if (ErrorLevel == 0){
-                    GuiControl, Text, CoopCheck, Coop Check: 1
-                    InCoop = 1
-                } else {
-                    GuiControl, Text, CoopCheck, Coop Check: 0
-                    InCoop = 0
-                }
+                GuiControl, Text, CoopCheck, Coop Check: 0
+                InCoop = 0
             }
         } else {
             Sleep, 1000
@@ -183,10 +220,8 @@ CoopCheck(){
 
 LeaveCoop(){
     Webhook("Leaving Coop")
-    HomeScreen()
-    SetCursorPos(365, 590)
-    Click
-    Sleep, 1000
+    CoopScreen()
+
     Click(1145, 733)
     Load()
 }
@@ -204,7 +239,11 @@ Load(){
 Speciality(){
     IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
     Loop, 1{
+        if(%LocalSpeciality% == ""){
+            break
+        }
         Beg(LocalSpeciality)
+        Webhook("Collecting " LocalSpeciality)
         if(%LocalSpeciality% == Qingxin){
             Domain(8)
             Loop, 5{
@@ -286,9 +325,15 @@ ReduceMap(){
 
 Teleport(x, y){
     tp := -1
+    increment := 0
     Loop {
         Click(x, y)
         Sleep, 1000
+        ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\loaded.png
+        if (ErrorLevel == 0){
+            tp = 0
+            break
+        } 
         ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\discoveredtp.png
         if (ErrorLevel == 0){
             tp = 1
@@ -302,6 +347,11 @@ Teleport(x, y){
             }
         }
         Send, {Esc}
+        increment += 1
+        if (increment > 50){
+            tp = 0
+            break
+        }
         ; error, next loop
     } ; check if tp waypoint is unlocked
     if (tp == 1){
@@ -334,7 +384,7 @@ StatueOfSeven(){
 
 Beg(speciality){
     Home()
-    Webhook("Begging for " speciality ".")
+    Webhook("Requesting for " speciality ".")
     Message("Hi")
     Message("I would like to take some " speciality " in your world")
     Send, {Esc}
@@ -383,6 +433,12 @@ Party(){
     Load()
 }
 
+CoopScreen(){
+    Home()
+    Send, {F2}
+    Sleep, 1000
+}
+
 JoinCoop(){
     index := 1
     joined := 0
@@ -390,21 +446,19 @@ JoinCoop(){
         Webhook("Joining Coop, Loop " index)
         index += 1
         Home()
+        ; 5 seconds coop check
         if (index != 2){
-            Sleep, 2500
+            Loop, 50 {
+                Sleep, 100
+                if (InCoop == 1){
+                    joined = 1
+                    break
+                }
+            }
         }
-        ; while loop check
-        if (InCoop == 1){
-            joined = 1
-            break
-        }
-        Send, {Esc}
-        Sleep, 1000
-        SetCursorPos(365, 590)
-        ; open coop page
-        Click
-        Sleep, 1000
+        CoopScreen()
         ; in coop, different interface
+        Sleep, 1000
         ImageSearch, OutputVarX, OutputVarY, 1000, 650, 1366, 768, %A_ScriptDir%\images\leave.png
         if (ErrorLevel == 0){
             joined = 1
@@ -427,6 +481,7 @@ JoinCoop(){
                 break
             }
         }
+        Sleep, 1000
         ; coop loading screens
         ImageSearch, OutputVarX, OutputVarY, 0, 0, 500, 500, %A_ScriptDir%\images\cooploading1.png
         if (ErrorLevel == 0){
@@ -461,11 +516,8 @@ Message(msg){
 
 Domain(domain){
     Loop, 1 {
-        HomeScreen()
-        c := CoopFunc(Click(465, 500))
-        if (c == 0){
-            break
-        }
+        Home()
+        Send, {F1}
         Sleep, 2000
         c := CoopFunc(Click(215, 315))
         if (c == 0){
@@ -481,7 +533,7 @@ Domain(domain){
         }
         Sleep, 500
         Click
-        Sleep, 5000
+        Sleep, 4000
     }
 }
 
