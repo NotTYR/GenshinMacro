@@ -11,6 +11,7 @@ Global InCoop := -1
 
 IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
 IniRead, Ore, %A_ScriptDir%/settings.ini, Collect, Ore
+IniRead, DoubleTp, %A_ScriptDir%/settings.ini, Settings, DoubleTp
 
 width := 500
 height := 150
@@ -26,9 +27,10 @@ GuiControl, Choose, OreChoice, |%Ore%
 Gui, Add, Text, x134 y0 w1 h85 0x7
 Gui, Add, Text, x270 y0 w1 h150 0x7
 Gui, Add, Text, x5 y85 w492 h1 0x7
-Gui, Add, Text, x280 y95 w110 vCoopCheck, Coop Check: -1
-Gui, Add, Button, x280 y115 default gJoinCoop, Join Coop
-Gui, Add, Button, x360 y115 default gWebhook, Webhook Settings
+Gui, Add, Button, x280 y95 default gWebhook, Webhook Settings
+Gui, Add, Text, x280 y125, Double Teleport
+Gui, Add, CheckBox, x390 y125 gDoubleTp vDoubleTp, 
+GuiControl,, DoubleTp, %DoubleTp%
 Gui, Add, Button, x350 y25 default gStart, Start(F6)
 Gui, Add, Button, y100 x15 default gLaunch, Launch Game
 Gui, Add, Button, y100 x175  default gClose, Close
@@ -42,6 +44,11 @@ O:
 LS:
     Gui, Submit, nohide
     IniWrite, %LocalSpecialityChoice%, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
+return
+
+DoubleTp:
+    Gui, Submit, nohide
+    IniWrite, %DoubleTp%, %A_ScriptDir%/settings.ini, Settings, DoubleTp
 return
 
 Close:
@@ -71,22 +78,29 @@ return
 
 Ore(){
     IniRead, Ore, %A_ScriptDir%/settings.ini, Collect, Ore
-    if(Ore == "Cor Lapis"){
-        Domain(15)
-        Loop, 5{
-            ZoomMap()
+    Loop, 1 {
+        Beg(Ore)
+        Webhook("Collecting " Ore)
+        if(Ore == "Cor Lapis"){
+            Domain(15)
+            Loop, 5{
+                ZoomMap()
+            }
+            t := Teleport(512, 723)
+            if (t == 0){
+                break
+            }
+            Send, {a down}
+            Sleep, 2300
+            Send, {a up}
+            Send, {w down}
+            Sleep, 2250
+            Send, {w up}
+            Send, {e down}
+            Sleep, 2000
+            Send, {e up}
+            Send, f
         }
-        Teleport(512, 723)
-        Send, {a down}
-        Sleep, 2300
-        Send, {a up}
-        Send, {w down}
-        Sleep, 2250
-        Send, {w up}
-        Send, {e down}
-        Sleep, 2000
-        Send, {e up}
-        Send, f
     }
 }
 
@@ -201,17 +215,14 @@ CoopCheck(){
             Sleep, 1000
             ImageSearch, OutputVarX, OutputVarY, 1200, 100, 1350, 300, %A_ScriptDir%\images\1p.png
             if (ErrorLevel == 0){
-                GuiControl, Text, CoopCheck, Coop Check: 1
                 InCoop = 1
             } else {
-                GuiControl, Text, CoopCheck, Coop Check: 0
                 InCoop = 0
             }
         } else {
             Sleep, 1000
             ImageSearch, OutputVarX, OutputVarY, 0, 0, 1366, 768, %A_ScriptDir%\images\kicked.png
             if (ErrorLevel == 0){
-                GuiControl, Text, CoopCheck, Coop Check: 2
                 InCoop = 2
             }
         }
@@ -239,9 +250,6 @@ Load(){
 Speciality(){
     IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
     Loop, 1{
-        if(%LocalSpeciality% == ""){
-            break
-        }
         Beg(LocalSpeciality)
         Webhook("Collecting " LocalSpeciality)
         if(%LocalSpeciality% == Qingxin){
@@ -357,8 +365,20 @@ Teleport(x, y){
     if (tp == 1){
         Click(1200, 700)
         Load()
+        Webhook("Successful Teleport")
+        IniRead, DoubleTp, %A_ScriptDir%/settings.ini, Settings, DoubleTp
+        if (DoubleTp == 1){
+            Webhook("DoubleTp")
+            Send, m
+            Sleep, 2000
+            Click(683, 384)
+            Sleep, 1000
+            Click(1200, 700)
+        }
+        Load()
         return 1
     } else {
+        Webhook("Exception occurred when teleporting")
         Home()
         return 0
     }
