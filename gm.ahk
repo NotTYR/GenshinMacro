@@ -239,10 +239,25 @@ LeaveCoop(){
 
 Load(){
     Loop {
-        ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\loaded.png
-        if (ErrorLevel == 0){
+        loaded := 0
+        increment := 0
+        Loop {
+            increment += 1
+            Sleep, 100
+            ImageSearch, OutputVarX, OutputVarY, 0, 0, 100, 100, %A_ScriptDir%\images\loaded.png
+            if (ErrorLevel == 0){
+                loaded = 1
+                break
+            }
+            if (increment == 200){
+                Webhook("Exception: Load failure after 20 seconds")
+                break
+            }
+        }
+        if (loaded = 1){
             break
         }
+        Home()
     }
 }
 
