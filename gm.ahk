@@ -51,18 +51,74 @@ Loaded(){
     }
 }
 
+WaypointUnlocked(){
+    Genshin()
+    PixelGetColor, c, 1050, 717
+    if(c = "0x325C6A" || c = "0x325C6B" || c = "0x325C6C"c = "0x325D6A" || c = "0x325D6B" || c = "0x325D6C"){
+        return 1
+    } else {
+        return 0
+    }
+}
+
+InCoop(){
+    ImageSearch, ox, oy, 1294, 212, 1307, 223, %A_ScriptDir%\images\coop.png
+    if(ErrorLevel = 0){
+        return 1
+    } else {
+        return 0
+    }
+}
+
 CharacterFilePath(Character){
     c := Character
     return % A_ScriptDir "\characters\" RegExReplace(c, "\s", "_") "_Icon.png"
 }
 
 Start(){
+    
+}
+
+Domain(d){
+    Home()
+    Send, {F1}
+    Loop {
+        if (FullScreenCheck() = 0){
+            break
+        }
+    }
+    Sleep, 2000
+    Click(210, 310)
+    SetCursorPos(810, 225)
+    Sleep, 2000
+    sendinput % "{WheelDown " 8 * d - 8 "}"
+    Sleep, 1000
+    Click(1100, 250)
+    Sleep, 3000
+}
+
+FullScreenCheck(){
+    SetCursorPos(0, 0)
+    Sleep, 100
+    MouseGetPos, x, y
+    if(x = 683){
+        return 1
+    } else {
+        return 0
+    }
+}
+
+Genshin(){
+    if WinExist("ahk_exe GenshinImpact.exe"){
+        WinActivate
+    }
 }
 
 Close:
     ExitApp
     Gui, Submit
 return
+
 
 
 MouseMove(x, y) {
@@ -74,6 +130,9 @@ MouseMove(x, y) {
     MsgBox %mx%, %my% 
 return
 
+f9::
+    ExitApp
+return
 
 f6::
     Start()
@@ -85,7 +144,25 @@ return
 
 
 Home(){
-
+    Genshin()
+    Loop {
+        if(Loaded() = 1){
+            break
+        }
+        if(FullScreenCheck() = 0){
+            Send, {Esc}
+            Sleep, 1500
+        } else {
+            Send, {Esc}
+            Loop, {
+                if(FullScreenCheck() = 0){
+                    break
+                }
+            }
+            Sleep, 1500
+        }
+        
+    }
 }
 
 SetCursorPos(x, y){
