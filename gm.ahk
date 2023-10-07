@@ -47,10 +47,74 @@ return
 
 
 Start(){
+    JoinCoop()
+    ExecuteInstructions()
+}
+
+;0x221C1C coopscreen1
+;0xFFFFFF coopscreen2
+
+JoinCoop(){
+    ; there might be unnecessary code, but it works.
+    ;home screen at first, when player is definitely not in coop
+    Home()
+    Loop {
+        Send, {F2}
+        ; wait for coop screen to load.
+        Loop {
+            ;safe?
+            PixelGetColor, c, 1233, 721
+            if(c = "0x8EBCD3"){
+                break
+            }
+            if(c = "0x221C1C" || c = "0xFFFFFF"){
+                ; coop screen
+                break 2
+            }
+            if(InCoop() = 1){
+                break 2
+            }
+        }
+        SetCursorPos(1160, 630)
+        Send, {WheelDown 350}
+        Loop, 44{
+            ; safe code
+            PixelGetColor, c, 1233, 721
+            if(c = "0x8EBCD3"){
+                Click
+                Send, {WheelUp 7}
+            } else {
+                break 2
+            }
+        }
+        Send, {Esc}
+        Loop, {
+            if(c = "0x221C1C" || c = "0xFFFFFF"){
+                ; coop screen
+                break 2
+            }
+            if(InCoop() = 1){
+                break 2
+            }
+            if(Loaded() = 1){
+                break
+            }
+        }
+        if(c = "0x221C1C" || c = "0xFFFFFF"){
+            ; coop screen
+            break
+        }
+        if(InCoop() = 1){
+            break
+        }
+    }
+}
+
+ExecuteInstructions(){
     ; no forever loops are allowed to prevent exceptions
     instructions := GetInstructions("test")
     domain := instructions[1]
-    for k,instruction in instructions{
+    for k,instruction in instructions {
         if(instruction != domain){
             ; not the first instruction
             if(SubStr(instruction 1, 2) = "mw" || SubStr(instruction, 1, 2) = "ma" || SubStr(instruction, 1, 2) = "ms" || SubStr(instruction, 1, 2) = "md"){
@@ -63,22 +127,22 @@ Start(){
                 while (A_tickcount < end_time)
                 {
                     if (Kicked() = 1){
-                        break
+                        return -1
                         Send, % "{" key " up}"
                     }
                     Sleep, 100
                 }
                 Send, % "{" key " up}"
             }
-            if(SubStr(%instruction%, 1, 5) = sleep){
+            if(SubStr(instruction, 1, 5) = "sleep"){
                 ;sleep
-                duration := SubStr(instruction, 2)
+                duration := SubStr(instruction, 6)
                 start_time := A_TickCount
                 end_time := start_time + duration
                 while (A_tickcount < end_time)
                 {
                     if (Kicked() = 1){
-                        break
+                        return -1
                     }
                     Sleep, 100
                 }
@@ -88,11 +152,34 @@ Start(){
                 SetKeyDelay, 0
                 Send, % SubStr(instruction, 5)
             }
+            if(SubStr(instruction, 1, 2) = "mg"){
+                Genshin()
+                ;message. Assume that this would be sent at the start and would be at homescreen.
+                message := SubStr(instruction, 3)
+                ; no kick detection because this is not a loop
+                if(Loaded() = 1) {
+                    Send, {Enter}
+                    Sleep, 1000
+                }
+                SetCursorPos(50, 250)
+                Send, {WheelUp 100}
+                Sleep, 500
+                Click(80, 100)
+                Sleep, 1000
+                Click(300, 715)
+                Sleep, 500
+                SetKeyDelay, 0
+                Send, %message%
+                Sleep, 500
+                Send, {Enter}
+                Sleep, 500
+            }
         } else {
             ; domain function. when coop loaded must be in home screen
-            
         }
     }
+    return 1
+    ; successful debug, idk why but it works now. this is the end of instructions.
 }
 
 Loaded(){
@@ -128,9 +215,10 @@ WaypointUnlocked(){
 }
 
 InCoop(){
-    ImageSearch, ox, oy, 1294, 212, 1307, 223, %A_ScriptDir%\images\coop.png
-    if(ErrorLevel = 0){
-        return 1
+    Genshin()
+    PixelGetColor, c, 1298, 216
+    if(c = 0x007E3D){
+        return 1 
     } else {
         return 0
     }
@@ -207,7 +295,9 @@ MouseMove(x, y) {
 
 +p::
     MouseGetPos, mx , my
-    MsgBox %mx%, %my% 
+    PixelGetColor, c, mx, my
+    MouseGetPos, x, y
+    MsgBox %x%, %y%, %c%
 return
 
 f9::

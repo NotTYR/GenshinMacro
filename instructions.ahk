@@ -2,9 +2,11 @@ global import := {}
 /*
 First item must be domain number.
 mw/ma/ms/md: movement, followed by miliseconds at the back
-Will add more instructions in the future.
+sleep500: Sleep for 500 miliseconds
+sendhi: types hide
+mghello: sends a "hello" in chat
 */
-import["test"] := [8,"ma100", "sleep500", "sendhi"]
+import["test"] := [8,"mghe","sleep2000","mgaft",""]
 GetInstructions(key){
     return % import[key]
 }
