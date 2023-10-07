@@ -4,10 +4,11 @@
 #Persistent
 #NoEnv
 
+
 #Include %A_ScriptDir%/instructions.ahk
 
+
 CoordMode Pixel
-SetKeyDelay, 0
 
 IniRead, LocalSpeciality, %A_ScriptDir%/settings.ini, Collect, LocalSpeciality
 IniRead, Ore, %A_ScriptDir%/settings.ini, Collect, Ore
@@ -46,16 +47,50 @@ return
 
 
 Start(){
+    ; no forever loops are allowed to prevent exceptions
     instructions := GetInstructions("test")
     domain := instructions[1]
-    MsgBox %domain%
     for k,instruction in instructions{
         if(instruction != domain){
-            if(SubStr(%instruction%, 1, 1) = m){
+            ; not the first instruction
+            if(SubStr(instruction 1, 2) = "mw" || SubStr(instruction, 1, 2) = "ma" || SubStr(instruction, 1, 2) = "ms" || SubStr(instruction, 1, 2) = "md"){
                 ;movement
                 duration := SubStr(instruction, 3)
                 key := SubStr(instruction, 2, 1)
+                Send, % "{" key " down}"
+                start_time := A_TickCount
+                end_time := start_time + duration
+                while (A_tickcount < end_time)
+                {
+                    if (Kicked() = 1){
+                        break
+                        Send, % "{" key " up}"
+                    }
+                    Sleep, 100
+                }
+                Send, % "{" key " up}"
             }
+            if(SubStr(%instruction%, 1, 5) = sleep){
+                ;sleep
+                duration := SubStr(instruction, 2)
+                start_time := A_TickCount
+                end_time := start_time + duration
+                while (A_tickcount < end_time)
+                {
+                    if (Kicked() = 1){
+                        break
+                    }
+                    Sleep, 100
+                }
+            }
+            if(SubStr(instruction, 1, 4) = "send"){
+                ;send
+                SetKeyDelay, 0
+                Send, % SubStr(instruction, 5)
+            }
+        } else {
+            ; domain function. when coop loaded must be in home screen
+            
         }
     }
 }
