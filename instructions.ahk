@@ -1,12 +1,15 @@
 global import := {}
 /*
 First item must be domain number.
+
 mw/ma/ms/md: movement, followed by miliseconds at the back
 sleep500: Sleep for 500 miliseconds
-sendhi: types hide
-mghello: sends a "hello" in chat
+sendhi: types hi
+mghello mr kind guy: sends a "hello mr kind guy" in chat
+
+not sure if it is still needed, but put an empty string at the back of instrutcions.
 */
-import["test"] := [8,"mghe","sleep2000","mgaft",""]
+import["test"] := [8,"mgmessage with space","sleep1000", ""]
 GetInstructions(key){
     return % import[key]
 }

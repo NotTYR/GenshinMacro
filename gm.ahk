@@ -47,7 +47,6 @@ return
 
 
 Start(){
-    JoinCoop()
     ExecuteInstructions()
 }
 
