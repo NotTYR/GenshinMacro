@@ -18,36 +18,26 @@ width := 200
 height := 250
 Menu, Tray, Icon, %A_ScriptDir%/images/icon.ico
 Gui, Font, s10, Verdana
-Gui, Add, Tab3, x0 y-1 w%width% h%height%, Character|Macro
-Gui, Tab, Character
-Gui, Add, Text, , Select Character
-Gui, Add, DropDownList, Choose1 vCharacter gCharacter, |Albedo|Alhaitham|Aloy|Amber|Arataki Itto|Baizhu|Barbara|Beidou|Bennett|Candace|Chongyun|Collei|Cyno|Dehya|Diluc|Diona|Dori|Eula|Faruzan|Fischl|Ganyu|Gorou|Hu Tao|Jean|Kaedehara Kazuha|Kaeya|Kamisato Ayaka|Kamisato Ayato|Kaveh|Keqing|Klee|Kujou Sara|Kuki Shinobu|Layla|Lisa|Mika|Mona|Nahida|Nilou|Ningguang|Noelle|Qiqi|Raiden Shogun|Razor|Rosaria|Sangonomiya Kokomi|Sayu|Shenhe|Shikanoin Heizou|Sucrose|Tartaglia|Thoma|Tighnari|Traveler|Venti|Wanderer|Xiangling|Xiao|Xingqiu|Xinyan|Yae Miko|Yanfei|Yaoyao|Yelan|Yoimiya|Yun Jin|Zhongli
-Gui, Add, Picture, w150 h150 vCharacterPic, % A_ScriptDir "\characters\" Character "_Icon.png"
-if(Character == ""){
-    GuiControl, hide, CharacterPic
-}
-GuiControl, Choose, Character, |%Character%
+Gui, Add, Tab3, x0 y-1 w%width% h%height%, Notice|Macro
+Gui, Tab, Notice
+Gui, Add, Text, x10 y30 w180 ,Create a team in the last slot of your party, consisting of:
+Gui, Add, Text, x10 y80,1. Nahida(local specialities)
+Gui, Add, Text, x10 y100,2. Zhongli(ores)
+Gui, Add, Text, x10 y120, 3. Yelan(birds)
+Gui, Add, Text, x10 y140,4. Sayu/Yaoyao(crystalfly)
 Gui, Tab, Macro
 Gui, Add, Button, default gLaunch, Launch Game
 Gui, Show, x800 y450 w%width% h%height%, Genshin Macro
 return
 
-Character:
-    Gui, Submit, nohide
-    IniWrite, %Character%, %A_ScriptDir%/settings.ini, Settings, Character
-    IniRead, Character, %A_ScriptDir%/settings.ini, Settings, Character
-    if (Character == ""){
-        GuiControl, hide, CharacterPic
-    } else {
-        cfp := CharacterFilePath(Character)
-        GuiControl, , CharacterPic, %cfp%
-        GuiControl, Show, CharacterPic
-    }
-return
-
 
 Start(){
-    ExecuteInstructions()
+    ExecuteInstructions("start")
+    Loop {
+        ExecuteInstructions("local")
+        JoinCoop()
+        ; ExecuteInstructions("whatever")
+    }
 }
 
 ;0x221C1C coopscreen1
@@ -109,9 +99,10 @@ JoinCoop(){
     }
 }
 
-ExecuteInstructions(){
+ExecuteInstructions(key){
     ; no forever loops are allowed to prevent exceptions
-    instructions := GetInstructions("test")
+    Genshin()
+    instructions := GetInstructions(key)
     domain := instructions[1]
     for k,instruction in instructions {
         if(instruction != domain){
@@ -133,6 +124,16 @@ ExecuteInstructions(){
                 }
                 Send, % "{" key " up}"
             }
+            if(SubStr(instruction, 1, 2) = "mx"){
+                SetCursorPos(683, 384)
+                Send, {WheelDown 100}
+                Sleep, 500
+            }
+            if(SubStr(instruction, 1, 2) = "mx"){
+                SetCursorPos(683, 384)
+                Send, {WheelUp 100}
+                Sleep, 500
+            }
             if(SubStr(instruction, 1, 5) = "sleep"){
                 ;sleep
                 duration := SubStr(instruction, 6)
@@ -150,6 +151,58 @@ ExecuteInstructions(){
                 ;send
                 SetKeyDelay, 0
                 Send, % SubStr(instruction, 5)
+            }
+            if(SubStr(instruction, 1, 3) = "scp"){
+                RegExMatch(instruction, "[0-9]+", x)
+                RegExMatch(instruction, "[0-9]+", y, RegExMatch(instruction, "[0-9]+") + StrLen(x))
+                SetCursorPos(x,y)
+            }
+            if(instruction = "p"){
+                Send, l
+                while(FullScreenCheck() = 0){
+                    Sleep, 100
+                }
+                Sleep, 3000
+                Click(57, 722)
+                Sleep, 500
+                SetCursorPos(190, 130)
+                Send, {WheelDown 100}
+                Sleep, 500
+                Click(250, 600)
+                Sleep, 500
+                Click(230, 720)
+                Sleep, 500
+                Click(1200, 720)
+                Send, {Esc}
+                while (Loaded() = 0)
+                {
+                    if (Kicked() = 1){
+                        return -1
+                    }
+                }
+            }
+            if(SubStr(instruction, 1, 2) = "tp"){
+                RegExMatch(instruction, "[0-9]+", x)
+                RegExMatch(instruction, "[0-9]+", y, RegExMatch(instruction, "[0-9]+") + StrLen(x))
+                Click(x,y)
+                while WaypointUnlocked() = -1
+                    Sleep, 100
+                if(WaypointUnlocked() = 0){
+                    return -1
+                } else {
+                    Click(1200, 700)
+                }
+                ; load script
+                while (Loaded() = 0)
+                {
+                    Sleep, 100
+                }
+                if(key != "local"){
+                    if(InCoop() = 0){
+                        ;lmao got kicked while tp'ing
+                        return -1
+                    }
+                }
             }
             if(SubStr(instruction, 1, 2) = "mg"){
                 Genshin()
@@ -174,7 +227,42 @@ ExecuteInstructions(){
                 Sleep, 500
             }
         } else {
-            ; domain function. when coop loaded must be in home screen
+            ;set domain to 0 if debugging
+            if(domain != 0){
+                Genshin()
+                Loop {
+                    if(Loaded() = 1){
+                        break
+                    }
+                    if(FullScreenCheck() = 0){
+                        Send, {Esc}
+                        Sleep, 1000
+                    } else {
+                        Send, {Esc}
+                        Loop, {
+                            if(FullScreenCheck() = 0){
+                                break
+                            }
+                        }
+                        Sleep, 1000
+                    }
+                    
+                }
+                Send, {F1}
+                Loop {
+                    if (FullScreenCheck() = 0){
+                        break
+                    }
+                }
+                Sleep, 2000
+                Click(210, 310)
+                SetCursorPos(810, 225)
+                Sleep, 2000
+                sendinput % "{WheelDown " 8 * domain - 8 "}"
+                Sleep, 1000
+                Click(1100, 250)
+                Sleep, 3000
+            }
         }
     }
     return 1
@@ -228,41 +316,6 @@ CharacterFilePath(Character){
     return % A_ScriptDir "\characters\" RegExReplace(c, "\s", "_") "_Icon.png"
 }
 
-Domain(d){
-    Genshin()
-    Loop {
-        if(Loaded() = 1){
-            break
-        }
-        if(FullScreenCheck() = 0){
-            Send, {Esc}
-            Sleep, 1500
-        } else {
-            Send, {Esc}
-            Loop, {
-                if(FullScreenCheck() = 0){
-                    break
-                }
-            }
-            Sleep, 1500
-        }
-        
-    }
-    Send, {F1}
-    Loop {
-        if (FullScreenCheck() = 0){
-            break
-        }
-    }
-    Sleep, 2000
-    Click(210, 310)
-    SetCursorPos(810, 225)
-    Sleep, 2000
-    sendinput % "{WheelDown " 8 * d - 8 "}"
-    Sleep, 1000
-    Click(1100, 250)
-    Sleep, 3000
-}
 
 FullScreenCheck(){
     SetCursorPos(0, 0)
