@@ -27,9 +27,14 @@ Gui, Add, Text, x10 y120, 3. Yelan(birds)
 Gui, Add, Text, x10 y140,4. Sayu/Yaoyao(crystalfly)
 Gui, Tab, Macro
 Gui, Add, Button, default gLaunch, Launch Game
+Gui, Add, Button, default gStart, Start(F6)
+Gui, Add, Text, ,press F9 to stop macro =D
 Gui, Show, x800 y450 w%width% h%height%, Genshin Macro
 return
 
+Start:
+    Start()
+return
 
 Start(){
     ExecuteInstructions("start")
