@@ -11,10 +11,18 @@ tp100,200: teleports to waypoint at 100, 200
 mn: minimise map
 mx: maximise map
 p: swap to macro party
+c30,4: click. coordinates are optional
+t-90,0: turn, followed by x and y degrees. y is optional.
+ns190: nahida scan 190 degrees
 
 */
+
 import["start"] := [0, "p"]
-import["local"] := [1,"mx","tp290,253","send1","sleep1000","md1400","ms500"]
+import["local"] := [2, "mx", "send{WheelDown 4}", "tp285,0"]
+import["lotus"] := [18, "mn", "send{WheelUp 10}", "tp656,630", "send{w down}","sleep5000","send{Space}","sleep12500","send{w up}","c","sleep2500","ma2000","mw3000","t45", "ns-60", "ma1000","mw3000","sleep1000","t-20","ns-70"]
+import["mushroom"] := [19, "mx", "send{WheelDown 2}", "tp733,23", "t-145", "ns","send{w down}","send{d down}","sleep1500","send{d up}","sleep1000","send{w up}","sendt","sleep2000","mw1500","sleep2000","mw1000","sende","sleep1000","ms1000","t180","t0,-90","sleep2000","ns"]
+import["test"] := [17, "tp683,384"]
+import["test2"] := [0,"t0,-90"]
 GetInstructions(key){
     return % import[key]
 }
