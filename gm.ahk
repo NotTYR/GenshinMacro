@@ -313,7 +313,7 @@ ExecuteInstructions(key){
                 }
                 Sleep, 5000
                 Click(57, 722)
-                Sleep, 500
+                Sleep, 1000
                 SetCursorPos(190, 130)
                 Send, {WheelDown 100}
                 Sleep, 500
@@ -341,7 +341,18 @@ ExecuteInstructions(key){
                 Click(x,y)
                 ; max load time
                 u := -1
-                duration := 3000
+                duration := 1000
+                start_time := A_TickCount
+                end_time := start_time + duration
+                while (A_tickcount < end_time)
+                {
+                    u = % WaypointUnlocked()
+                    if (u != -1){
+                        break
+                    }
+                }
+                Sleep, 500
+                duration := 1000
                 start_time := A_TickCount
                 end_time := start_time + duration
                 while (A_tickcount < end_time)
@@ -355,11 +366,12 @@ ExecuteInstructions(key){
                     return -1
                 }
                 if(u = 1){
-                    Sleep, 500
                     Click(1200, 700)
                     Sleep, 500
+                    Webhook("Waypoint Detected")
                 } else {
-                    return %u%
+                    Webhook("Waypoint not found")
+                    return -1
                 }
                 ; load script
                 Loop{
@@ -425,7 +437,7 @@ ExecuteInstructions(key){
                         break
                     }
                 }
-                Sleep, 2000
+                Sleep, 3000
                 Click(204, 308)
                 SetCursorPos(810, 225)
                 Sleep, 2000
@@ -461,7 +473,7 @@ Kicked(){
 WaypointUnlocked(){
     Genshin()
     PixelGetColor, c, 1050, 717
-    if(c = "0x325C6A" || c = "0x325C6B" || c = "0x325C6C"c = "0x325D6A" || c = "0x325D6B" || c = "0x325D6C"){
+    if(c = "0x325C6A" || c = "0x325C6B" || c = "0x325C6C" || c = "0x325D6A" || c = "0x325D6B" || c = "0x325D6C"){
         return 1
     } else {
         if(c = "0x313131" || c = "0x323232"){
