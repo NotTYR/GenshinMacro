@@ -85,19 +85,21 @@ Start(){
             break
         }
     }
-    Webhook("Teleorting to Statue of 7")
+    Webhook("Teleporting to Statue of 7")
     Loop{
         e := ExecuteInstructions("local")
         if(e != -1){
             break
         }
     }
-    Webhook("Swapping to Nahida")
-    Send, 1
     Loop{
+        Webhook("Swapping to Nahida")
+        Send, 1
         JoinCoop()
         ExecuteInstructions("mushroom")
         LeaveCoop()
+        Webhook("Swapping to Nahida")
+        Send, 1
         JoinCoop()
         ExecuteInstructions("lotus")
         LeaveCoop()
@@ -114,7 +116,7 @@ JoinCoop(){
             ;safe?
             PixelGetColor, c, 1233, 721
             if(c = "0x8EBCD3"){  
-                Webhook("Coop Screen Detected")
+                Webhook("screen loaded")
                 break
             }
             if(c = "0x221C1C" || c = "0xFFFFFF"){
@@ -189,7 +191,7 @@ LeaveCoop(){
     ; very slacky coop leaving without checking for various cases haaha
     Genshin()
     Loop, {
-        if(Loaded() = 1){
+        if(FullScreenCheck() = 1){
             break
         }
         Send, {Esc}
@@ -200,20 +202,11 @@ LeaveCoop(){
         return
     }
     Send, {F2}
-    Loop{
-        PixelGetColor, c, 1233, 721
-        if(c = "0x8EBCD3"){
-            ; idk when got kicked
-            return
-        }
-        PixelGetColor, c, 1074, 719
-        if(c = "0xE4A238"){
-            break
-        }
-    }
+    Sleep, 2000
     Click(1074, 719)
+    ; back to own world
     Loop, {
-        if(Loaded() = 1){
+        if(Loaded() = 1 || FullScreenCheck() = 1){
             break
         }
         Send, {Esc}
@@ -249,6 +242,20 @@ ExecuteInstructions(key){
                     Sleep, 100
                 }
                 Send, % "{" key " up}"
+            }
+            if(instruction = "dtp"){
+                ; series of clicks and inputs, no loops
+                Send, m
+                Sleep, 2500
+                Click(683, 384)
+                Sleep, 500
+                Click(1200,700)
+                Loop{
+                    if(FullScreenCheck() = 1){
+                        break
+                    }
+                }
+                Sleep, 500
             }
             if(SubStr(instruction, 1, 1) = "t"){
                 if(SubStr(instruction, 2, 1) != "p"){
@@ -363,6 +370,7 @@ ExecuteInstructions(key){
                     }
                 }
                 if (u = -1){
+                    Webhook("Error?")
                     return -1
                 }
                 if(u = 1){
@@ -382,7 +390,9 @@ ExecuteInstructions(key){
                 ; small coop checking
                 if(key != "local"){
                     if(domain != 0){
+                        Sleep, 500
                         if(InCoop() = 0){
+                            Webhook("Could not detect Coop")
                             ;lmao got kicked while tp'ing
                             return -1
                         }
