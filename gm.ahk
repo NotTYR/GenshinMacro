@@ -34,8 +34,10 @@ Gui, Show, x800 y450 w%width% h%height%, Genshin Macro
 return
 
 Webhook(msg){
+    Sleep, 50
     IniRead, url, %A_ScriptDir%/settings.ini, Links, WebhookUrl
     Send_Msg_to_Discord(msg, url)
+    Sleep, 50
 }
 
 Send_Msg_to_Discord(msg,Url="webhookurl"){
@@ -82,9 +84,7 @@ Debug:
 return
 
 Debug(){
-    Genshin()
-    PixelGetColor, c, 1075, 720
-    MsgBox % c
+    
 }
 
 Start:
@@ -92,7 +92,7 @@ Start:
 return
 
 Start(){
-    Webhook("Switching to Coop Party")
+    Webhook("Switching to Macro Party")
     Loop{
         e := ExecuteInstructions("start")
         if(e != -1){
@@ -126,11 +126,9 @@ JoinCoop(){
     Webhook("Joining Coop")
     Genshin()
     Loop {
-        if(InCoop() = 1){
-            Webhook("Joined Coop")
-            return
-        }
+        Sleep, 1000
         Send, {F2}
+        Sleep, 1000
         ; wait for coop screen to load.
         Loop {
             ;safe?
@@ -139,17 +137,14 @@ JoinCoop(){
                 Webhook("screen loaded")
                 break
             }
-            if(c = "0x221C1C" || c = "0xFFFFFF"){
-                ; coop screen
-                Webhook("Joining Coop")
-                return
-            }
             PixelSearch, Px, Py, 1050, 700, 1100, 750, 0xdd9d38, 3, Fast
-            if ErrorLevel
+            if ErrorLevel {
                 Sleep, 100
-            else
+            }
+            else {
                 Webhook("Joined Coop")
                 return
+            }
             if(InCoop() = 1){
                 Webhook("Joined Coop")
                 return
@@ -157,6 +152,23 @@ JoinCoop(){
             if(Kicked() = 1){
                 Webhook("Kicked")
                 return
+            }
+            if(FullScreenCheck() = 1){
+                ; joined coop possible. checking once more.
+                Webhook("Possibly Joined Coop")
+                Send, {F2}
+                Sleep, 1000
+                PixelSearch, Px, Py, 1050, 700, 1100, 750, 0xdd9d38, 3, Fast
+                if ErrorLevel {
+                    Sleep, 100
+                }
+                else {
+                    Webhook("Joined Coop")
+                    Send, {Esc}
+                    Sleep, 1000
+                    return
+                }
+                ; also makes sure player is in coop screen
             }
         }
         ;requests
@@ -207,6 +219,7 @@ JoinCoop(){
             Sleep, 500
         }
     }
+
 }
 
 Turn(xdeg, ydeg=0){
@@ -227,10 +240,10 @@ Dead(){
 
 
 LeaveCoop(){
-    Webhook("Leaving Coop")
     ; function ends when in own world
     ; very slacky coop leaving without checking for various cases haaha
     Genshin()
+    Webhook("Leaving Coop")
     Loop, {
         if(FullScreenCheck() = 1){
             break
@@ -260,6 +273,7 @@ LeaveCoop(){
 
 Message(message){
     Genshin()
+    Webhook("Sending message: " message)
     ;message. Assume that this would be sent at the start and would be at homescreen.
     ; no kick detection because this is not a loop
     Send, {Enter}
@@ -425,14 +439,14 @@ ExecuteInstructions(key){
                 }
                 Sleep, 5000
                 Click(57, 722)
-                Sleep, 1000
+                Sleep, 3000
                 SetCursorPos(190, 130)
                 Send, {WheelDown 100}
-                Sleep, 500
+                Sleep, 1000
                 Click(250, 600)
-                Sleep, 500
+                Sleep, 1000
                 Click(230, 720)
-                Sleep, 500
+                Sleep, 1000
                 Click(1200, 720)
                 Home()
             }
@@ -569,6 +583,7 @@ ExecuteInstructions(key){
                 }
             }
             if(domain != 0){
+                Webhook("Heading towards domain " domain)
                 Genshin()
                 Send, {F1}
                 Loop {
