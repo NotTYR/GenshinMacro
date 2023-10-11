@@ -154,6 +154,10 @@ JoinCoop(){
                 Webhook("Joined Coop")
                 return
             }
+            if(Kicked() = 1){
+                Webhook("Kicked")
+                return
+            }
         }
         ;requests
         Webhook("Sending Coop Requests")
