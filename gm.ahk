@@ -83,7 +83,8 @@ return
 
 Debug(){
     Genshin()
-    MsgBox % Dead()
+    PixelGetColor, c, 1075, 720
+    MsgBox % c
 }
 
 Start:
@@ -109,11 +110,13 @@ Start(){
         Webhook("Swapping to Nahida")
         Send, 1
         JoinCoop()
+        Message("Hi I want to take some mushrooms from Sumeru")
         ExecuteInstructions("mushroom")
         LeaveCoop()
         Webhook("Swapping to Nahida")
         Send, 1
         JoinCoop()
+        Message("Hi I want to take some lotuses from Sumeru")
         ExecuteInstructions("lotus")
         LeaveCoop()
     }
@@ -137,6 +140,12 @@ JoinCoop(){
                 Webhook("Joining Coop")
                 return
             }
+            PixelSearch, Px, Py, 1050, 700, 1100, 750, 0xdd9d38, 3, Fast
+            if ErrorLevel
+                Sleep, 100
+            else
+                Webhook("Joined Coop")
+                return
             if(InCoop() = 1){
                 Webhook("Joined Coop")
                 return
@@ -240,6 +249,28 @@ LeaveCoop(){
 
 ;0x221C1C coopscreen1
 ;0xFFFFFF coopscreen2
+
+Message(message){
+    Genshin()
+    ;message. Assume that this would be sent at the start and would be at homescreen.
+    ; no kick detection because this is not a loop
+    Send, {Enter}
+    Sleep, 1000
+    SetCursorPos(50, 250)
+    Send, {WheelUp 100}
+    Sleep, 500
+    Click(80, 100)
+    Sleep, 1000
+    Click(300, 715)
+    Sleep, 500
+    SetKeyDelay, 0
+    Send, %message%
+    Sleep, 500
+    Send, {Enter}
+    Sleep, 1000
+    Send, {Esc}
+    Sleep, 500
+}
 
 
 ExecuteInstructions(key){

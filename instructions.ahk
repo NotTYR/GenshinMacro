@@ -5,7 +5,6 @@ First item must be domain number. If you don't want to teleport set domain numbe
 mw/ma/ms/md: movement, followed by miliseconds at the back. eg: md5000
 sleep500: Sleep for 500 miliseconds
 sendhi: types hi
-mghello mr kind guy: sends a "hello mr kind guy" in chat
 scp10,20:set cursor pos to 10, 20
 tp100,200: teleports to waypoint at 100, 200
 mn: minimise map
@@ -16,6 +15,8 @@ t-90,0: turn, followed by x and y degrees. y is optional.
 ns190: nahida scan 190 degrees
 dtp: double teleport
 
+; dont use mg. bad
+mghello mr kind guy: sends a "hello mr kind guy" in chat
 */
 
 import["start"] := [0, "p"]
