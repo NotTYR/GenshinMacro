@@ -74,7 +74,7 @@ dq=
 
 
 Start:
-    Start()
+    ExecuteInstructions("local")
 return
 
 Start(){
@@ -185,6 +185,16 @@ Turn(xdeg, ydeg=0){
     DllCall("mouse_event", "UInt", 0x01, "UInt", 3700 * xdeg / 360, "UInt", 3700 * ydeg / -360)
 }
 
+Dead(){
+    SetCursorPos(0,0)
+    PixelSearch, Px, Py, 600, 700, 630, 730, 0xc8d3df, 3, Fast
+    if ErrorLevel
+        return 0
+    else
+        return 1
+}
+
+
 LeaveCoop(){
     Webhook("Leaving Coop")
     ; function ends when in own world
@@ -228,6 +238,16 @@ ExecuteInstructions(key){
             ; not the first instruction
             if(SubStr(instruction, 1, 2) = "mw" || SubStr(instruction, 1, 2) = "ma" || SubStr(instruction, 1, 2) = "ms" || SubStr(instruction, 1, 2) = "md"){
                 ;movement
+                if(Dead() = 1){
+                    Click(625, 725)
+                    Loop{
+                        if(FullScreenCheck() = 1){
+                            break
+                        }
+                    }
+                    Sleep, 1000
+                    return -1
+                }
                 duration := SubStr(instruction, 3)
                 key := SubStr(instruction, 2, 1)
                 Send, % "{" key " down}"
@@ -238,6 +258,16 @@ ExecuteInstructions(key){
                     if (Kicked() = 1){
                         return -1
                         Send, % "{" key " up}"
+                    }
+                    if(Dead() = 1){
+                        Click(625, 725)
+                        Loop{
+                            if(FullScreenCheck() = 1){
+                                break
+                            }
+                        }
+                        Sleep, 1000
+                        return -1
                     }
                     Sleep, 100
                 }
@@ -254,6 +284,18 @@ ExecuteInstructions(key){
                     if(FullScreenCheck() = 1){
                         break
                     }
+                    if(Dead() = 1){
+                        Click(625, 725)
+                        Loop{
+                            if(FullScreenCheck() = 1){
+                                break
+                            }
+                        }
+                        Sleep, 1000
+                        return -1
+                    }
+                    Send, {Esc}
+                    Sleep, 1000
                 }
                 Sleep, 500
             }
@@ -298,6 +340,16 @@ ExecuteInstructions(key){
                     if (Kicked() = 1){
                         return -1
                     }
+                    if(Dead() = 1){
+                        Click(625, 725)
+                        Loop{
+                            if(FullScreenCheck() = 1){
+                                break
+                            }
+                        }
+                        Sleep, 1000
+                        return -1
+                    }
                     Sleep, 100
                 }
             }
@@ -312,7 +364,7 @@ ExecuteInstructions(key){
                 SetCursorPos(x,y)
             }
             if(instruction = "p"){
-                ; party
+                ; party. local. no coop check needed
                 Home()
                 Send, l
                 while(FullScreenCheck() = 0){
@@ -332,6 +384,7 @@ ExecuteInstructions(key){
                 Home()
             }
             if(SubStr(instruction, 1, 1) = "c"){
+                ;no coop check needed.
                 RegExMatch(instruction, "[0-9]+", x)
                 RegExMatch(instruction, "[0-9]+", y, RegExMatch(instruction, "[0-9]+") + StrLen(x))
                 if(x = "" || y = ""){
@@ -386,6 +439,18 @@ ExecuteInstructions(key){
                     if(FullScreenCheck() = 1){
                         break
                     }
+                    if(Dead() = 1){
+                        Click(625, 725)
+                        Loop{
+                            if(FullScreenCheck() = 1){
+                                break
+                            }
+                        }
+                        Sleep, 1000
+                        return -1
+                    }
+                    Send, {Esc}
+                    Sleep, 1000
                 }
                 ; small coop checking
                 if(key != "local"){
@@ -426,21 +491,33 @@ ExecuteInstructions(key){
             if(Kicked() = 1){
                 return -1
             }
+            ; home script
             if(Loaded() != 1){
                 Loop{
                     if(FullScreenCheck() = 1){
                         break
-                    } else {
-                        Send, {Esc}
-                        Sleep, 1500
                     }
                     if(Loaded() = 1){
                         break
                     }
+                    if(Dead() = 1){
+                        Click(625, 725)
+                        Sleep, 500
+                        Loop{
+                            if(FullScreenCheck() = 1){
+                                break
+                            }
+                        }
+                        Sleep, 1000
+                        return -1
+                    }
+                    Send, {Esc}
+                    Sleep, 1500
                 }
             }
             if(domain != 0){
-                Home()
+                Genshin()
+                MsgBox ok
                 Send, {F1}
                 Loop {
                     if (FullScreenCheck() = 0){
