@@ -126,6 +126,10 @@ JoinCoop(){
     Webhook("Joining Coop")
     Genshin()
     Loop {
+        if(InCoop() = 1){
+            Webhook("Joined Coop")
+            return
+        }
         Send, {F2}
         ; wait for coop screen to load.
         Loop {
