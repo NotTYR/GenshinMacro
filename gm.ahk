@@ -28,6 +28,7 @@ Gui, Add, Text, x10 y140,4. Sayu/Yaoyao(crystalfly)
 Gui, Tab, Macro
 Gui, Add, Button, default gLaunch, Launch Game
 Gui, Add, Button, default gStart, Start(F6)
+Gui, Add, Button, default gDebug, Debug(F8)
 Gui, Add, Text, ,press F9 to stop macro =D
 Gui, Show, x800 y450 w%width% h%height%, Genshin Macro
 return
@@ -72,9 +73,21 @@ dq=
     return % msg
 }
 
+f8::
+    Debug()
+return
+
+Debug:
+    Debug()
+return
+
+Debug(){
+    Genshin()
+    MsgBox % Dead()
+}
 
 Start:
-    ExecuteInstructions("local")
+    Start()
 return
 
 Start(){
@@ -187,10 +200,11 @@ Turn(xdeg, ydeg=0){
 
 Dead(){
     SetCursorPos(0,0)
-    PixelSearch, Px, Py, 600, 700, 630, 730, 0xc8d3df, 3, Fast
+    PixelSearch, Px, Py, 600, 730, 630, 740, 0xc8d3df, 3, Fast
     if ErrorLevel
         return 0
     else
+        Webhook("Player Dead")
         return 1
 }
 
@@ -412,7 +426,7 @@ ExecuteInstructions(key){
                     }
                 }
                 Sleep, 500
-                duration := 1000
+                duration := 3000
                 start_time := A_TickCount
                 end_time := start_time + duration
                 while (A_tickcount < end_time)
@@ -453,7 +467,7 @@ ExecuteInstructions(key){
                     Sleep, 1000
                 }
                 ; small coop checking
-                if(key != "local"){
+                if(key != "local" && Substr(key,1,4) != "test"){
                     if(domain != 0){
                         Sleep, 500
                         if(InCoop() = 0){
@@ -517,7 +531,6 @@ ExecuteInstructions(key){
             }
             if(domain != 0){
                 Genshin()
-                MsgBox ok
                 Send, {F1}
                 Loop {
                     if (FullScreenCheck() = 0){
